@@ -68,8 +68,8 @@ def function(x1,x2):
     # Pesos de la funcion (mirar hoja a parte que tengo como a y b) 
     Dimension = 2;
     H = np.zeros((Dimension, Dimension))
-    H[0,0]=1/25000
-    H[1,1]=1/25000
+    H[0,0]=1/500
+    H[1,1]=1/500
     # Funcion propiamente dicha
     f = np.exp(-(H[0,0]*x1**2 + H[1,1]*x2**2))  
     # Derivadas para comparar con el caso de que realmente exista el gradiente. 

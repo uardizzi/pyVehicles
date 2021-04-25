@@ -39,7 +39,7 @@ for i in range(num_of_agents-1):
 
 desired_inter_vehicle_theta = (2*np.pi/num_of_agents)*np.ones((len(list_of_edges),1))
 theta_vehicles = np.zeros((num_of_agents,1))
-k_coord = 40
+k_coord = 10
 
 # Incidence matrix
 B = np.zeros((num_of_agents, len(list_of_edges)))
@@ -54,7 +54,7 @@ for idx,edge in enumerate(list_of_edges):
 
 # Directed vs Undirected graph. They have different convergence properties
 # If you want to control with an undirected graph, then uncomment the following.
-B_dir = B
+# B_dir = B
 
 for i in range(num_of_agents):
     theta_o = np.pi - (2*np.pi)*np.random.rand(1);
@@ -67,11 +67,11 @@ for agent in list_of_agents:
 ke_circle = 5e-5
 kd_circle = 60
 
-xo = 500 # Circle's center
-yo = 500
-ro = 50 # radius
+xo = 20 # Circle's center
+yo = 20
+ro = 5 # radius
 stop = 100;
-epsilon = 2000;
+epsilon = 10;
 fun = 0;
 ck = np.array([xo,yo])
 
@@ -112,6 +112,7 @@ while(runsim):
 
     dr = -k_coord*B_dir.dot(np.sin(error_theta))
     dr = direction*dr
+    # print("Soy error: ",la.norm(error_theta))
     
     # Algorithm gradient estimation. 
     positions_agents = np.zeros((2*num_of_agents,1))
@@ -122,7 +123,7 @@ while(runsim):
     # print(positions_agents)
     # # Seria conveniente hacer que avance aca, porque creo que en caso contrario no me hace la animacion
     # # Voy a tener que separar los codigos, uno para calcular el gradiente 
-    if (la.norm(error_theta) < 0.3 and fun < 0.9999):
+    if (la.norm(error_theta) < 0.6 and fun < 0.9999):
         gradestfin=grad.computegradient(xo,yo,positions_agents,ro) # Gradiente.
         fun = grad.function(xo,yo) # Gradiente.
         # positions_agents = positions_agents + epsilon*gradestfin
