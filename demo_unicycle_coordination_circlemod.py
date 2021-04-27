@@ -6,6 +6,7 @@ sys.path.insert(1, './postproc')
 sys.path.insert(1, './vehicles')
 sys.path.insert(1, './algorithm')
 
+from time import sleep
 import pygame
 import matplotlib.pyplot as pl
 import matplotlib.colors as mcolors
@@ -16,6 +17,7 @@ from numpy import linalg as la
 import gradiente as grad
 import logpostpro as lp
 import gvf
+
 
 # setup simulation
 WIDTH = 1200
@@ -30,7 +32,7 @@ size = [WIDTH, HEIGHT]
 screen = pygame.display.set_mode(size)
 
 # Network
-num_of_agents = 4
+num_of_agents = 8
 list_of_agents = []
 list_of_edges = [] # For the coordination on the circle
 
@@ -39,7 +41,7 @@ for i in range(num_of_agents-1):
 
 desired_inter_vehicle_theta = (2*np.pi/num_of_agents)*np.ones((len(list_of_edges),1))
 theta_vehicles = np.zeros((num_of_agents,1))
-k_coord = 10
+k_coord = 50
 
 # Incidence matrix
 B = np.zeros((num_of_agents, len(list_of_edges)))
@@ -67,13 +69,14 @@ for agent in list_of_agents:
 ke_circle = 5e-5
 kd_circle = 60
 
-xo = 20 # Circle's center
-yo = 20
-ro = 5 # radius
+xo = 700 # Circle's center
+yo = 700
+ro = 50 # radius
 stop = 100;
-epsilon = 10;
+epsilon = 0.1; # Como esta muy cerca del maximo el valor se vuelve ridiculamente grande.
 fun = 0;
 ck = np.array([xo,yo])
+center = np.array([CENTERX,CENTERY])
 
 #
 direction = -1 # Clock or counter-clock wise. This defines what angular velocity is positive
@@ -115,27 +118,28 @@ while(runsim):
     # print("Soy error: ",la.norm(error_theta))
     
     # Algorithm gradient estimation. 
-    positions_agents = np.zeros((2*num_of_agents,1))
+    positions_agents = np.zeros((num_of_agents,2))
     for idx,agent in enumerate(list_of_agents):
-        positions_agents[2*idx] =  np.array([agent.pos[0]]) # Tengo que pasar la posicion, xo, yo y D, y con todo eso los organizo desde el otro lado.
-        positions_agents[2*idx + 1] =  np.array([agent.pos[1]]) # Tengo que pasar la posicion, xo, yo y D, y con todo eso los organizo desde el otro lado.
+        positions_agents[idx,0] =  np.array([agent.pos[0]])     # Probe si era como pasaba las posiciones y lo cambie.
+        positions_agents[idx,1] =  np.array([agent.pos[1]])  
     
     # print(positions_agents)
     # # Seria conveniente hacer que avance aca, porque creo que en caso contrario no me hace la animacion
     # # Voy a tener que separar los codigos, uno para calcular el gradiente 
-    if (la.norm(error_theta) < 0.6 and fun < 0.9999):
-        gradestfin=grad.computegradient(xo,yo,positions_agents,ro) # Gradiente.
-        fun = grad.function(xo,yo) # Gradiente.
-        # positions_agents = positions_agents + epsilon*gradestfin
+    if (la.norm(error_theta) < 0.05 and fun < 0.999999):
+        # print("soy xo: ",xo)
+        # print("soy yo: ",yo)
+        gradestfin=grad.computegradient(xo,yo,positions_agents,ro,center,num_of_agents) # Gradiente (paso el centro para que dentro calcule el valor de la función con el máximo en otro lado, en lugar de en (0,0))
+        fun = grad.function(xo-CENTERX,yo-CENTERY) # Gradiente.
         ck = ck + epsilon*gradestfin # Avance.
         xo = ck[0]
         yo = ck[1]
-        stop = sum(abs(gradestfin))
-        print("soy fun: ",fun)
-        print("gradestfin: ",gradestfin)
-        print("soy stop: ",stop)
-        print("soy ck: ",ck)
-            
+        # print("soy fun: ",fun)
+        # print("gradestfin: ",gradestfin)
+        # print("soy stop: ",stop)
+        # print("soy ck: ",ck)
+        # print("positions_agents: ",positions_agents)
+        
     # Guiding vector field
     for idx,agent in enumerate(list_of_agents):
         agent.draw(screen)
