@@ -24,13 +24,13 @@ Xgrid, Ygrid = np.meshgrid(X, Y)
 # Parametros
 D = 2
 angulo = np.linspace(0, 2*np.pi, 1000) 
-epsilon = 10
+epsilon = 0.1    #Poner epsilon mas pequeño si utiliza el metodo NR, si es GA un pelo mas grande.
 Dimension = 2
 robots = 5;
 
 # Puntos de donde parte mi centro (esto posteriormente lo paso desde su codigo)
-x1 = 20
-x2 = 20
+x1 = 0
+x2 = 0
 ck = np.array([x1,x2])             #Ck en cada momento sera el centro.
 
 def function(x1,x2):
@@ -85,21 +85,30 @@ def computegradient(x1,x2,robots,positions):
     gradestfin = constante*sum(gradest)
     return gradestfin
 
-def computehesian(x1,x2,robots,positions):
+def computek_f(x1,x2,robots,positions):
     xo = np.array([x1,x2]) 
     N = robots
     constante = 16/(N*D**4)
-    hesiano = np.zeros((2*N,2),dtype='d')
+    k_f = np.zeros((N,4),dtype='d')
+    hesiano = np.zeros((N,4),dtype='d')
     for k in range(N): 
         fradios = function(positions[k,0],positions[k,1]) 
         f_center = function(xo[0],xo[1])
         f_total = fradios - f_center
-        hesiano[2*k,0] = f_total*(positions[k,0]-x1)*(positions[k,0]-x1)
-        hesiano[2*k,1] = f_total*(positions[k,1]-x2)*(positions[k,0]-x1)
-        hesiano[2*k+1,0] = f_total*(positions[k,0]-x1)*(positions[k,1]-x2)
-        hesiano[2*k+1,1] = f_total*(positions[k,1]-x2)*(positions[k,1]-x2)
-    hesian_estimated = constante*sum(hesiano)
-    return hesian_estimated
+        k_f[k,0] = f_total*(positions[k,0]-x1)*(positions[k,0]-x1)
+        k_f[k,1] = f_total*(positions[k,1]-x2)*(positions[k,0]-x1) #Son las xy cruzadas.
+        k_f[k,2] = f_total*(positions[k,0]-x1)*(positions[k,1]-x2) #Son las xy cruzadas.
+        k_f[k,3] = f_total*(positions[k,1]-x2)*(positions[k,1]-x2)
+    k_f_estimated = constante*sum(k_f)
+    return k_f_estimated 
+
+def computehesiano(k_f_estimated):
+    hesiano = np.zeros((2,2),dtype='d')
+    hesiano[0,0] = (-k_f_estimated[3]+3*k_f_estimated[0])/8
+    hesiano[0,1] =  (k_f_estimated[2]+3*k_f_estimated[1])/8 #Son las xy cruzadas.
+    hesiano[1,0] =  (k_f_estimated[1]+3*k_f_estimated[2])/8#Son las xy cruzadas.
+    hesiano[1,1] = -(k_f_estimated[0]-3*k_f_estimated[3])/8
+    return hesiano
 
 
 positions = np.zeros((robots,2),dtype='d')
@@ -107,7 +116,7 @@ positions = placerobots(x1,x2,robots)
 fun = 0
 fig, ax = plt.subplots(figsize=(10,9))
 while(fun < 0.99999):
-    plt.pause(0.5) # Espera.
+    plt.pause(1) # Espera.
     plt.cla()
     cp = ax.contour(Xgrid, Ygrid, zz, 10, cmap = 'RdGy') # Contorno.
     ax.clabel(cp, inline=True, fontsize=12)
@@ -120,15 +129,19 @@ while(fun < 0.99999):
     Ycir = D * np.sin(angulo) + k
     ax.plot(Xcir,Ycir, color='r')
     gradestfin=computegradient(ck[0],ck[1],robots,positions) # Gradiente.
-    hesiano=computehesian(ck[0],ck[1],robots,positions) # Realmente no es el hesiano es la Ksigma que despues se despeja de la ecuacion matricial (me falta eso).
-    ax.plot(positions[:robots-1,0],positions[:robots-1,1],'o')  #Robots-1 para graficar con el gradiente (omite el central)
+    k_f=computek_f(ck[0],ck[1],robots,positions) # Realmente no es el k_f es la Ksigma que despues se despeja de la ecuacion matricial (me falta eso).
+    hesiano=computehesiano(k_f)
     plt.quiver(ck[0],ck[1],gradestfin[0],gradestfin[1],color='r')
-    positions = positions + epsilon*gradestfin
-    ck = ck + epsilon*gradestfin # Avance.
+    ax.plot(positions[:,0],positions[:,1],'o')  #Estas lineas ejecutan el metodo NR.
+    positions = positions - epsilon*np.dot(np.linalg.inv(hesiano),gradestfin)
+    ck = ck - epsilon*np.dot(np.linalg.inv(hesiano),gradestfin)
+    # ax.plot(positions[:robots-1,0],positions[:robots-1,1],'o')  #Esta tres lineas ejecutan el metodo sin hessiano (GA).
+    # positions = positions + epsilon*gradestfin
+    # ck = ck + epsilon*gradestfin
     fun = function(ck[0],ck[1])
     print("soy fun: ",fun)
     print("gradestfin: ",gradestfin)
-    print("hesiano: ",hesiano)
+    print("hessiano: ",hesiano)
     print("soy ck: ",ck)
     if sum(abs(gradestfin)) <= 10**-4 : # Condicion de parada.
         break
