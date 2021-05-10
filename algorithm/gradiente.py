@@ -49,8 +49,11 @@ def function(x1,x2,th,desv,flag):
     comp_y[1,1] = x2
     Res_x = np.divide(Hnew, comp_x,out=np.zeros_like(Hnew), where=comp_x!=0)
     Res_y = np.divide(Hnew, comp_y,out=np.zeros_like(Hnew), where=comp_y!=0)
-    G[1,0]= (-2*Res_y[0,0]-Res_x[0,1]-Res_x[1,0])*np.exp(-(Hnew[0,0] + Hnew[1,1])) #Primera derivada.
+    G[1,0]= (-2*Res_y[1,1]-Res_x[0,1]-Res_x[1,0])*np.exp(-(Hnew[0,0] + Hnew[1,1])) #Primera derivada.
     G[0,0]= (-2*Res_x[0,0]-Res_y[0,1]-Res_y[1,0])*np.exp(-(Hnew[0,0] + Hnew[1,1])) 
+    # print("meh: ",G[1,0])
+    # print("H: ",Hnew)
+    # print("H: ",Res_y)
     if flag==0:
         return f
     else:

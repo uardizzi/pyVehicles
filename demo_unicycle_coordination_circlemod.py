@@ -17,7 +17,9 @@ from numpy import linalg as la
 import gradiente as grad
 import logpostpro as lp
 import gvf
+import warnings
 
+warnings.filterwarnings('ignore')
 
 # setup simulation
 WIDTH = 1200
@@ -69,11 +71,11 @@ for agent in list_of_agents:
 ke_circle = 5e-5
 kd_circle = 60
 
-xo = 600 # Circle's center
+xo = 0 # Circle's center
 yo = 0
-ro = 50 # radius
+ro = 30 # radius
 stop = 100;
-epsilon = 10;
+epsilon = 20;
 fun = 0;
 ck = np.array([xo,yo])
 error = np.zeros((2,1),dtype='d')
@@ -82,7 +84,7 @@ counter = 0
 desv = np.array([1000/np.sqrt(2),1000/np.sqrt(2)])
 
 #
-direction = -1 # Clock or counter-clock wise. This defines what angular velocity is positive
+direction = 1 # Clock or counter-clock wise. This defines what angular velocity is positive
 
 # run simulation
 pygame.init()
@@ -94,8 +96,8 @@ time = 0
 runsim = True
 
 pl.figure(1)
-x = np.arange(0.,900.,10)
-y = np.arange(0.,900.,10)
+x = np.arange(-100.,1300.,10)
+y = np.arange(-100.,1300.,10)
 [X,Y] = np.meshgrid(x,y)
 ctr_gaussian=center
 Z = grad.gausianillas(X,Y,ctr_gaussian,[1000/np.sqrt(2),1000/np.sqrt(2)],0,1)
@@ -139,7 +141,7 @@ while(runsim):
     # print(positions_agents)
     # # Seria conveniente hacer que avance aca, porque creo que en caso contrario no me hace la animacion
     # # Voy a tener que separar los codigos, uno para calcular el gradiente 
-    if (la.norm(error_theta) < 0.2 and fun < 0.999999):
+    if (la.norm(error_theta) < 0.2 and fun < 0.999):
         # print("soy xo: ",xo)
         # print("soy yo: ",yo)
         # print("soy fun: ",fun)
@@ -160,9 +162,12 @@ while(runsim):
          print("soy fun: ",fun)
          # print("gradestfin: ",gradestfin)
          # print('grd real',grd)
-         pl.figure(1)
+         fig = pl.figure(1)
+         ax = fig.add_subplot(111)
          pl.arrow(ck[0],ck[1],1000*gradestfin[0],1000*gradestfin[1],color='r')
          pl.arrow(ck[0],ck[1],1000*grd[0,0],1000*grd[1,0],color='k')
+         ax.set_xlabel('N')
+         ax.set_ylabel('$\nabla$')
          
          pl.figure(2)
          pl.plot(counter,fun,'.r',markersize=1)         
@@ -182,7 +187,7 @@ while(runsim):
          #pl.plot()
          error[0] = gradestfin[0]-grd[0,0]
          error[1] = gradestfin[1]-grd[1,0]
-         pl.plot(counter,la.norm(100*gradestfin-100*grd),'r',markersize=1)
+         pl.plot(counter,la.norm(error),'r',markersize=1)
         elif fun >= 0.999:
             break
         counter = counter + 1    
