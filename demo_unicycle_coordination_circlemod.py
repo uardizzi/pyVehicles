@@ -32,7 +32,7 @@ size = [WIDTH, HEIGHT]
 screen = pygame.display.set_mode(size)
 
 # Network
-num_of_agents = 8
+num_of_agents = 4
 list_of_agents = []
 list_of_edges = [] # For the coordination on the circle
 
@@ -69,14 +69,17 @@ for agent in list_of_agents:
 ke_circle = 5e-5
 kd_circle = 60
 
-xo = 700 # Circle's center
-yo = 700
+xo = 600 # Circle's center
+yo = 0
 ro = 50 # radius
 stop = 100;
-epsilon = 0.1; # Como esta muy cerca del maximo el valor se vuelve ridiculamente grande.
+epsilon = 10;
 fun = 0;
 ck = np.array([xo,yo])
+error = np.zeros((2,1),dtype='d')
 center = np.array([CENTERX,CENTERY])
+counter = 0
+desv = np.array([1000/np.sqrt(2),1000/np.sqrt(2)])
 
 #
 direction = -1 # Clock or counter-clock wise. This defines what angular velocity is positive
@@ -89,6 +92,16 @@ dt = 1.0/fps
 time = 0
 
 runsim = True
+
+pl.figure(1)
+x = np.arange(0.,900.,10)
+y = np.arange(0.,900.,10)
+[X,Y] = np.meshgrid(x,y)
+ctr_gaussian=center
+Z = grad.gausianillas(X,Y,ctr_gaussian,[1000/np.sqrt(2),1000/np.sqrt(2)],0,1)
+pl.contour(X,Y,Z,np.arange(0,1,0.01))
+pl.axis('equal')
+
 while(runsim):
     screen.fill(BLACK)
 
@@ -126,19 +139,53 @@ while(runsim):
     # print(positions_agents)
     # # Seria conveniente hacer que avance aca, porque creo que en caso contrario no me hace la animacion
     # # Voy a tener que separar los codigos, uno para calcular el gradiente 
-    if (la.norm(error_theta) < 0.05 and fun < 0.999999):
+    if (la.norm(error_theta) < 0.2 and fun < 0.999999):
         # print("soy xo: ",xo)
         # print("soy yo: ",yo)
-        gradestfin=grad.computegradient(xo,yo,positions_agents,ro,center,num_of_agents) # Gradiente (paso el centro para que dentro calcule el valor de la función con el máximo en otro lado, en lugar de en (0,0))
-        fun = grad.function(xo-CENTERX,yo-CENTERY) # Gradiente.
-        ck = ck + epsilon*gradestfin # Avance.
-        xo = ck[0]
-        yo = ck[1]
         # print("soy fun: ",fun)
         # print("gradestfin: ",gradestfin)
         # print("soy stop: ",stop)
         # print("soy ck: ",ck)
         # print("positions_agents: ",positions_agents)
+        gradestfin=grad.computegradient(xo,yo,positions_agents,ro,center,num_of_agents,desv) # Gradiente (paso el centro para que dentro calcule el valor de la función con el máximo en otro lado, en lugar de en (0,0))
+        fun = grad.function(xo-CENTERX,yo-CENTERY,0,desv,0) # Gradiente.
+        grd = grad.function(xo-CENTERX,yo-CENTERY,0,desv,1)
+        ck = ck + epsilon*gradestfin # Avance.
+        xo = ck[0]
+        yo = ck[1]
+        if counter%100==0:     
+         # print("soy ck: ",ck)
+         # print(grd)
+         # print("Final: ", gradestfin)
+         print("soy fun: ",fun)
+         # print("gradestfin: ",gradestfin)
+         # print('grd real',grd)
+         pl.figure(1)
+         pl.arrow(ck[0],ck[1],1000*gradestfin[0],1000*gradestfin[1],color='r')
+         pl.arrow(ck[0],ck[1],1000*grd[0,0],1000*grd[1,0],color='k')
+         
+         pl.figure(2)
+         pl.plot(counter,fun,'.r',markersize=1)         
+         
+         pl.figure(3)
+         pl.plot(counter,grd[0,0],'.r',markersize=1)
+         pl.plot(counter,grd[1,0],'.b',markersize=1)
+         pl.plot(counter,gradestfin[0],'.g',markersize=1)
+         pl.plot(counter,gradestfin[1],'.k',markersize=1)
+         
+         pl.figure(4)
+         #pl.plot()
+         pl.plot(counter,gradestfin[0]-grd[0,0],'.r',markersize=1)
+         pl.plot(counter,gradestfin[1]-grd[1,0],'.b',markersize=1)
+           
+         pl.figure(5)
+         #pl.plot()
+         error[0] = gradestfin[0]-grd[0,0]
+         error[1] = gradestfin[1]-grd[1,0]
+         pl.plot(counter,la.norm(100*gradestfin-100*grd),'r',markersize=1)
+        elif fun >= 0.999:
+            break
+        counter = counter + 1    
         
     # Guiding vector field
     for idx,agent in enumerate(list_of_agents):
@@ -147,14 +194,14 @@ while(runsim):
         ut = gvf.gvf_control_2D_unicycle(agent.pos, agent.vel, ke_circle, kd_circle, circle_path, direction)
         agent.step_dt(us, ut, dt)
 
-    clock.tick(fps)
-    pygame.display.flip()
+    # clock.tick(fps)
+    # pygame.display.flip()
 
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            endtime = pygame.time.get_ticks()
-            pygame.quit()
-            runsim = False
+    # for event in pygame.event.get():
+    #     if event.type == pygame.QUIT:
+    #         endtime = pygame.time.get_ticks()
+    #         pygame.quit()
+    #         runsim = False
 
 
 # Postprocessing

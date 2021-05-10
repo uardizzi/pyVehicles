@@ -106,7 +106,7 @@ def computehesiano(k_f_estimated):
     hesiano = np.zeros((2,2),dtype='d')
     hesiano[0,0] = (-k_f_estimated[3]+3*k_f_estimated[0])/8
     hesiano[0,1] =  (k_f_estimated[2]+3*k_f_estimated[1])/8 #Son las xy cruzadas.
-    hesiano[1,0] =  (k_f_estimated[1]+3*k_f_estimated[2])/8#Son las xy cruzadas.
+    hesiano[1,0] =  (k_f_estimated[1]+3*k_f_estimated[2])/8 #Son las xy cruzadas.
     hesiano[1,1] = -(k_f_estimated[0]-3*k_f_estimated[3])/8
     return hesiano
 
