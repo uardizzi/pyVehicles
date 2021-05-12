@@ -34,7 +34,7 @@ size = [WIDTH, HEIGHT]
 screen = pygame.display.set_mode(size)
 
 # Network
-num_of_agents = 4
+num_of_agents = 8
 list_of_agents = []
 list_of_edges = [] # For the coordination on the circle
 
@@ -73,15 +73,16 @@ kd_circle = 60
 
 xo = 0 # Circle's center
 yo = 0
-ro = 30 # radius
+ro = 50 # radius
 stop = 100;
-epsilon = 20;
+epsilon = 10;
 fun = 0;
 ck = np.array([xo,yo])
 error = np.zeros((2,1),dtype='d')
 center = np.array([CENTERX,CENTERY])
 counter = 0
 desv = np.array([1000/np.sqrt(2),1000/np.sqrt(2)])
+k = 1000        # Usar si las graficas quedan muy pequeñas el eje y (amplia la escala)
 
 #
 direction = 1 # Clock or counter-clock wise. This defines what angular velocity is positive
@@ -155,7 +156,7 @@ while(runsim):
         ck = ck + epsilon*gradestfin # Avance.
         xo = ck[0]
         yo = ck[1]
-        if counter%100==0:     
+        if counter%50==0:     
          # print("soy ck: ",ck)
          # print(grd)
          # print("Final: ", gradestfin)
@@ -164,30 +165,42 @@ while(runsim):
          # print('grd real',grd)
          fig = pl.figure(1)
          ax = fig.add_subplot(111)
-         pl.arrow(ck[0],ck[1],1000*gradestfin[0],1000*gradestfin[1],color='r')
-         pl.arrow(ck[0],ck[1],1000*grd[0,0],1000*grd[1,0],color='k')
-         ax.set_xlabel('N')
-         ax.set_ylabel('$\nabla$')
+         pl.arrow(ck[0],ck[1],k*gradestfin[0],1000*gradestfin[1],color='r')
+         pl.arrow(ck[0],ck[1],k*grd[0,0],1000*grd[1,0],color='k')
+         ax.set_xlabel('X')
+         ax.set_ylabel('Y')
          
-         pl.figure(2)
-         pl.plot(counter,fun,'.r',markersize=1)         
+         # fig = pl.figure(2)
+         # ax = fig.add_subplot(111)
+         # pl.plot(counter,fun,'.r',markersize=1)         
+         # ax.set_xlabel('N')
+         # ax.set_ylabel('f(x)')
          
-         pl.figure(3)
-         pl.plot(counter,grd[0,0],'.r',markersize=1)
-         pl.plot(counter,grd[1,0],'.b',markersize=1)
-         pl.plot(counter,gradestfin[0],'.g',markersize=1)
-         pl.plot(counter,gradestfin[1],'.k',markersize=1)
+         fig = pl.figure(3)
+         ax = fig.add_subplot(111)
+         pl.plot(counter,k*grd[0,0],'.r',markersize=1)
+         pl.plot(counter,k*grd[1,0],'.b',markersize=1)
+         pl.plot(counter,k*gradestfin[0],'.g',markersize=1)
+         pl.plot(counter,k*gradestfin[1],'.k',markersize=1)
+         ax.legend([r'$\nabla{f(x)}$',r'$\nabla{f(y)}$',r'$\widehat{\nabla}{f(x)}$',r'$\widehat{\nabla}{f(y)}$'])
+         ax.set_xlabel('N (iteraciones)')
+         ax.set_ylabel(r'$Comparativa:\nabla{f--}\widehat{\nabla}{f}$')
          
-         pl.figure(4)
-         #pl.plot()
-         pl.plot(counter,gradestfin[0]-grd[0,0],'.r',markersize=1)
-         pl.plot(counter,gradestfin[1]-grd[1,0],'.b',markersize=1)
-           
-         pl.figure(5)
-         #pl.plot()
+         fig = pl.figure(4)
+         ax = fig.add_subplot(111)
+         pl.plot(counter,k*(gradestfin[0]-grd[0,0]),'.r',markersize=1)
+         pl.plot(counter,k*(gradestfin[1]-grd[1,0]),'.b',markersize=1)
+         ax.legend([r'$\widehat{\nabla}{f(x)-}\nabla{f(x)}$',r'$\widehat{\nabla}{f(y)-}\nabla{f(y)}$'])
+         ax.set_ylabel('Diferencia gradientes')
+         ax.set_xlabel('N (iteraciones)')
+
+         fig = pl.figure(5)
+         ax = fig.add_subplot(111)
          error[0] = gradestfin[0]-grd[0,0]
          error[1] = gradestfin[1]-grd[1,0]
-         pl.plot(counter,la.norm(error),'r',markersize=1)
+         pl.plot(counter,k*la.norm(error),'.r',markersize=1)
+         ax.set_ylabel(r'${||}\widehat{\nabla}{f-}\nabla{f}{||}$')
+         ax.set_xlabel('N (iteraciones)')
         elif fun >= 0.999:
             break
         counter = counter + 1    
@@ -209,14 +222,15 @@ while(runsim):
     #         runsim = False
 
 
-# Postprocessing
-fig = pl.figure(0)
-ax = fig.add_subplot(111)
-for agent in list_of_agents:
-    lp.plot_position(ax, agent)
-    ax.axis("equal")
-    ax.grid
-#circle = pl.Circle((xo, yo), ro, color='r')
-#ax.add_patch(circle)
 
-pl.show()
+# # Postprocessing
+# fig = pl.figure(0)
+# ax = fig.add_subplot(111)
+# for agent in list_of_agents:
+#     lp.plot_position(ax, agent)
+#     ax.axis("equal")
+#     ax.grid
+# #circle = pl.Circle((xo, yo), ro, color='r')
+# #ax.add_patch(circle)
+
+# pl.show()
